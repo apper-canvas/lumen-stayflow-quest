@@ -245,44 +245,44 @@ const getRoomNumber = (roomId) => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredTasks.map(task => (
               <div key={task.Id} className="bg-gray-50 rounded-lg p-4 card-hover">
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900 truncate mr-2">{task.title}</h3>
+<div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900 truncate mr-2">{task.title_c}</h3>
                   <div className="flex gap-1">
-                    <Badge variant={getPriorityColor(task.priority)} size="sm">
-                      {task.priority}
+                    <Badge variant={getPriorityColor(task.priority_c)} size="sm">
+                      {task.priority_c}
                     </Badge>
-                    <Badge variant={getTaskStatusColor(task.status)} size="sm">
-                      {task.status}
+                    <Badge variant={getTaskStatusColor(task.status_c)} size="sm">
+                      {task.status_c}
                     </Badge>
                   </div>
                 </div>
 
-                {task.description && (
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+                {task.description_c && (
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description_c}</p>
                 )}
 
                 <div className="space-y-2 mb-4 text-sm text-gray-600">
                   <div className="flex items-center">
-<ApperIcon name="MapPin" size={14} className="mr-2" />
-                    Room {getRoomNumber(task.roomId)}
-                    {getRoomDetails(task.roomId)?.status && (
-                      <Badge variant={getRoomDetails(task.roomId).status.toLowerCase().replace(' ', '')} size="sm" className="ml-2">
-                        {getRoomDetails(task.roomId).status}
+                    <ApperIcon name="MapPin" size={14} className="mr-2" />
+                    Room {getRoomNumber(task.room_id_c)}
+                    {getRoomDetails(task.room_id_c)?.status_c && (
+                      <Badge variant={getRoomDetails(task.room_id_c).status_c.toLowerCase().replace(' ', '')} size="sm" className="ml-2">
+                        {getRoomDetails(task.room_id_c).status_c}
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center">
                     <ApperIcon name="User" size={14} className="mr-2" />
-                    {task.assignedTo}
+                    {task.assigned_to_c}
                   </div>
                   <div className="flex items-center">
                     <ApperIcon name="Calendar" size={14} className="mr-2" />
-                    {new Date(task.scheduledDate).toLocaleDateString()}
+                    {new Date(task.scheduled_date_c).toLocaleDateString()}
                   </div>
-                  {task.estimatedDuration && (
+                  {task.estimated_duration_c && (
                     <div className="flex items-center">
                       <ApperIcon name="Clock" size={14} className="mr-2" />
-                      {task.estimatedDuration} minutes
+                      {task.estimated_duration_c} minutes
                     </div>
                   )}
                 </div>
@@ -297,17 +297,17 @@ const getRoomNumber = (roomId) => {
                     <ApperIcon name="Edit" size={12} className="mr-1" />
                     Edit
                   </Button>
-{task.status !== 'Completed' && task.status !== 'Cancelled' && (
+{task.status_c !== 'Completed' && task.status_c !== 'Cancelled' && (
                     <Button
                       size="sm"
                       variant="secondary"
                       onClick={() => handleStatusChange(task, 
-                        task.status === 'Pending' ? 'In Progress' : 'Completed'
+                        task.status_c === 'Pending' ? 'In Progress' : 'Completed'
                       )}
                       className="flex-1"
                     >
                       <ApperIcon name="CheckCircle" size={12} className="mr-1" />
-                      {task.status === 'Pending' ? 'Start' : 'Complete'}
+                      {task.status_c === 'Pending' ? 'Start' : 'Complete'}
                     </Button>
                   )}
                 </div>

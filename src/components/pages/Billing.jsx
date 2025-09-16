@@ -656,43 +656,54 @@ const unpaidReservations = reservations.filter(reservation =>
               {filteredBills.map((bill) => (
                 <div key={bill.Id} className="px-6 py-4 hover:bg-gray-50">
                   <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
-                    <div>
+<div>
                       <p className="font-medium text-gray-900">#{bill.Id}</p>
                       <p className="text-sm text-gray-600">
-                        {bill.createdAt && format(new Date(bill.createdAt), "MMM d, yyyy")}
+                        {bill.created_at_c && format(new Date(bill.created_at_c), "MMM d, yyyy")}
                       </p>
                     </div>
                     
                     <div>
-                      <p className="font-medium text-gray-900">{bill.guestName}</p>
+                      <p className="font-medium text-gray-900">{bill.guest_name_c}</p>
                     </div>
                     
                     <div>
-                      <p className="font-medium text-gray-900">Room {bill.roomNumber}</p>
+                      <p className="font-medium text-gray-900">Room {bill.room_number_c}</p>
                     </div>
                     
                     <div>
-                      <p className="font-medium text-gray-900">${bill.totalAmount.toFixed(2)}</p>
+                      <p className="font-medium text-gray-900">${bill.total_amount_c.toFixed(2)}</p>
                       <p className="text-sm text-gray-600">
-                        Room: ${bill.roomCharges.toFixed(2)}
-                        {bill.additionalCharges && bill.additionalCharges.length > 0 && (
-                          <>, Extras: ${bill.additionalCharges.reduce((sum, charge) => sum + charge, 0).toFixed(2)}</>
-                        )}
+                        Room: ${bill.room_charges_c.toFixed(2)}
+                        {(() => {
+                          try {
+                            const additionalCharges = typeof bill.additional_charges_c === 'string' 
+                              ? JSON.parse(bill.additional_charges_c) 
+                              : bill.additional_charges_c;
+                            if (Array.isArray(additionalCharges) && additionalCharges.length > 0) {
+                              const total = additionalCharges.reduce((sum, charge) => sum + (typeof charge === 'number' ? charge : parseFloat(charge) || 0), 0);
+                              return <>, Extras: ${total.toFixed(2)}</>;
+                            }
+                            return null;
+                          } catch {
+                            return null;
+                          }
+                        })()}
                       </p>
                     </div>
                     
                     <div>
                       <Badge 
                         variant={
-                          bill.paymentStatus === "Paid" ? "success" :
-                          bill.paymentStatus === "Overdue" ? "error" :
+                          bill.payment_status_c === "Paid" ? "success" :
+                          bill.payment_status_c === "Overdue" ? "error" :
                           "pending"
                         }
                       >
-                        {bill.paymentStatus}
+                        {bill.payment_status_c}
                       </Badge>
-                      {bill.paymentMethod && (
-                        <p className="text-xs text-gray-600 mt-1">{bill.paymentMethod}</p>
+                      {bill.payment_method_c && (
+                        <p className="text-xs text-gray-600 mt-1">{bill.payment_method_c}</p>
                       )}
                     </div>
                     

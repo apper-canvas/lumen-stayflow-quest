@@ -344,9 +344,9 @@ const result = window.confirm(
 {filteredReservations.map((reservation) => (
                 <div key={reservation.Id} className="px-6 py-4 hover:bg-gray-50">
                   <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
-                    <div>
+<div>
                       <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{reservation.guestName}</p>
+                        <p className="font-medium text-gray-900">{reservation.guest_name_c}</p>
                         {reservation.isGroupBooking && (
                           <Badge variant="info" size="sm">
                             <ApperIcon name="Users" size={12} className="mr-1" />
@@ -370,14 +370,14 @@ const result = window.confirm(
                     </div>
                     
                     <div>
-                      <p className="font-medium text-gray-900">Room {reservation.roomNumber}</p>
-                      <p className="text-sm text-gray-600">{reservation.roomType}</p>
+                      <p className="font-medium text-gray-900">Room {reservation.room_number_c}</p>
+                      <p className="text-sm text-gray-600">{reservation.room_type_c}</p>
                     </div>
                     
-<div>
+                    <div>
                       <p className="font-medium text-gray-900">
                         {(() => {
-                          const checkInDate = new Date(reservation.checkIn);
+                          const checkInDate = new Date(reservation.check_in_c);
                           return !isNaN(checkInDate.getTime()) 
                             ? format(checkInDate, "MMM d, yyyy")
                             : "Invalid date";
@@ -385,7 +385,7 @@ const result = window.confirm(
                       </p>
                       <p className="text-sm text-gray-600">
                         {(() => {
-                          const checkInDate = new Date(reservation.checkIn);
+                          const checkInDate = new Date(reservation.check_in_c);
                           return !isNaN(checkInDate.getTime()) 
                             ? format(checkInDate, "h:mm a")
                             : "Invalid time";
@@ -394,9 +394,9 @@ const result = window.confirm(
                     </div>
                     
                     <div>
-<p className="font-medium text-gray-900">
+                      <p className="font-medium text-gray-900">
                         {(() => {
-                          const checkOutDate = new Date(reservation.checkOut);
+                          const checkOutDate = new Date(reservation.check_out_c);
                           return !isNaN(checkOutDate.getTime()) 
                             ? format(checkOutDate, "MMM d, yyyy")
                             : "Invalid date";
@@ -404,7 +404,7 @@ const result = window.confirm(
                       </p>
                       <p className="text-sm text-gray-600">
                         {(() => {
-                          const checkOutDate = new Date(reservation.checkOut);
+                          const checkOutDate = new Date(reservation.check_out_c);
                           return !isNaN(checkOutDate.getTime()) 
                             ? format(checkOutDate, "h:mm a")
                             : "Invalid time";
@@ -414,14 +414,14 @@ const result = window.confirm(
                     <div>
                       <Badge 
                         variant={
-                          reservation.status === "Confirmed" ? "confirmed" :
-                          reservation.status === "Checked In" ? "checkedin" :
-                          reservation.status === "Checked Out" ? "success" :
-                          reservation.status === "Cancelled" ? "cancelled" :
+                          reservation.status_c === "Confirmed" ? "confirmed" :
+                          reservation.status_c === "Checked In" ? "checkedin" :
+                          reservation.status_c === "Checked Out" ? "success" :
+                          reservation.status_c === "Cancelled" ? "cancelled" :
                           "pending"
                         }
                       >
-                        {reservation.status}
+                        {reservation.status_c}
                       </Badge>
                     </div>
                     

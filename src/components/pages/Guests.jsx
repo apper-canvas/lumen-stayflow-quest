@@ -653,93 +653,104 @@ error={formErrors.phone}
               {filteredGuests.map((guest) => (
                 <div key={guest.Id} className="px-6 py-4 hover:bg-gray-50">
                   <div className="grid grid-cols-1 md:grid-cols-8 gap-4 items-center">
-                    <div>
+<div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-gray-900">
-                          {guest.firstName} {guest.lastName}
-                          {guest.vipStatus && (
+                          {guest.first_name_c} {guest.last_name_c}
+                          {guest.vip_status_c && (
                             <span className="ml-2">
                               <ApperIcon name="Star" size={16} className="inline text-yellow-500" />
                             </span>
                           )}
                         </p>
-                        {guest.accountType === "corporate" && (
+                        {guest.account_type_c === "corporate" && (
                           <Badge variant="secondary" size="sm">
                             <ApperIcon name="Building2" size={12} className="mr-1" />
                             Corporate
                           </Badge>
                         )}
                       </div>
-                      {guest.accountType === "corporate" && guest.companyName && (
-                        <p className="text-sm text-blue-600 font-medium">{guest.companyName}</p>
+                      {guest.account_type_c === "corporate" && guest.company_name_c && (
+                        <p className="text-sm text-blue-600 font-medium">{guest.company_name_c}</p>
                       )}
                     </div>
                     
                     <div>
-                      <p className="text-gray-900">{guest.email}</p>
+                      <p className="text-gray-900">{guest.email_c}</p>
                     </div>
                     
                     <div>
-                      <p className="text-gray-900">{guest.phone}</p>
+                      <p className="text-gray-900">{guest.phone_c}</p>
                     </div>
                     
                     <div>
-                      <div className="text-sm font-medium">{guest.idType}</div>
-                      <div className="text-xs text-gray-500">{guest.idNumber}</div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-gray-900">
-                        {guest.address?.city && guest.address?.state 
-                          ? `${guest.address.city}, ${guest.address.state}`
-                          : "Not provided"
-                        }
-                      </p>
-                    </div>
-                    
-<div>
                       <Badge 
-                        variant={guest.accountType === "corporate" ? "info" : "default"} 
+                        variant={guest.account_type_c === "corporate" ? "info" : "default"} 
                         size="sm"
                       >
-                        {guest.accountType === "corporate" ? "Corporate" : "Individual"}
+                        {guest.account_type_c === "corporate" ? "Corporate" : "Individual"}
                       </Badge>
-                      {guest.accountType === "corporate" && guest.corporateDiscount > 0 && (
+                      {guest.account_type_c === "corporate" && guest.corporate_discount_c > 0 && (
                         <p className="text-xs text-green-600 mt-1">
-                          {guest.corporateDiscount}% discount
+                          {guest.corporate_discount_c}% discount
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <p className="font-medium text-gray-900">{guest.idType || "N/A"}</p>
-                      <p className="text-sm text-gray-600">{guest.idNumber || "Not provided"}</p>
+                      <p className="font-medium text-gray-900">{guest.id_type_c || "N/A"}</p>
+                      <p className="text-sm text-gray-600">{guest.id_number_c || "Not provided"}</p>
                     </div>
 
                     <div>
                       <p className="font-medium text-gray-900">
-                        {guest.address?.city || "N/A"}, {guest.address?.state || "N/A"}
+                        {(() => {
+                          try {
+                            const address = typeof guest.address_c === 'string' ? JSON.parse(guest.address_c) : guest.address_c;
+                            return address?.city && address?.state 
+                              ? `${address.city}, ${address.state}` 
+                              : "Not provided";
+                          } catch {
+                            return "Not provided";
+                          }
+                        })()}
                       </p>
-                      <p className="text-sm text-gray-600">{guest.address?.zipCode || ""}</p>
+                      <p className="text-sm text-gray-600">
+                        {(() => {
+                          try {
+                            const address = typeof guest.address_c === 'string' ? JSON.parse(guest.address_c) : guest.address_c;
+                            return address?.zipCode || "";
+                          } catch {
+                            return "";
+                          }
+                        })()}
+                      </p>
                     </div>
 
                     <div className="flex flex-col space-y-1">
-                      {guest.vipStatus && (
+                      {guest.vip_status_c && (
                         <Badge variant="warning" size="sm">
                           VIP Guest
                         </Badge>
                       )}
-                      {guest.loyaltyProgram?.tier && (
-                        <Badge 
-                          variant={guest.loyaltyProgram.tier.toLowerCase() === "gold" ? "warning" : "info"} 
-                          size="sm"
-                        >
-                          {guest.loyaltyProgram.tier} ({guest.loyaltyProgram.points} pts)
-                        </Badge>
-                      )}
-                      {guest.accountType === "corporate" && guest.creditLimit > 0 && (
+                      {(() => {
+                        try {
+                          const loyalty = typeof guest.loyalty_program_c === 'string' ? JSON.parse(guest.loyalty_program_c) : guest.loyalty_program_c;
+                          return loyalty?.tier && (
+                            <Badge 
+                              variant={loyalty.tier.toLowerCase() === "gold" ? "warning" : "info"} 
+                              size="sm"
+                            >
+                              {loyalty.tier} ({loyalty.points || 0} pts)
+                            </Badge>
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()}
+                      {guest.account_type_c === "corporate" && guest.credit_limit_c > 0 && (
                         <Badge variant="success" size="sm">
-                          Credit: ${guest.creditLimit}
+                          Credit: ${guest.credit_limit_c}
                         </Badge>
                       )}
                     </div>

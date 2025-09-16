@@ -254,33 +254,42 @@ class GuestService {
     };
   }
 
-  transformToDB(data) {
+transformToDB(data) {
     const dbRecord = {};
     
-    if (data.firstName !== undefined) dbRecord.First_Name__c = data.firstName;
-    if (data.lastName !== undefined) dbRecord.Last_Name__c = data.lastName;
-    if (data.email !== undefined) dbRecord.Email__c = data.email;
-    if (data.phone !== undefined) dbRecord.Phone__c = data.phone;
-    if (data.idType !== undefined) dbRecord.ID_Type__c = data.idType;
-    if (data.idNumber !== undefined) dbRecord.ID_Number__c = data.idNumber;
-    if (data.address?.street !== undefined) dbRecord.Address_Street__c = data.address.street;
-    if (data.address?.city !== undefined) dbRecord.Address_City__c = data.address.city;
-    if (data.address?.state !== undefined) dbRecord.Address_State__c = data.address.state;
-    if (data.address?.zipCode !== undefined) dbRecord.Address_ZIP_Code__c = data.address.zipCode;
-    if (data.vipStatus !== undefined) dbRecord.VIP_Status__c = data.vipStatus;
-    if (data.loyaltyProgram?.tier !== undefined) dbRecord.Loyalty_Tier__c = data.loyaltyProgram.tier;
-    if (data.loyaltyProgram?.points !== undefined) dbRecord.Loyalty_Points__c = data.loyaltyProgram.points;
-    if (data.accountType !== undefined) dbRecord.Account_Type__c = data.accountType === 'corporate' ? 'Corporate' : 'Individual';
-    if (data.companyName !== undefined) dbRecord.Company_Name__c = data.companyName;
-    if (data.companyRegistration !== undefined) dbRecord.Company_Registration__c = data.companyRegistration;
-    if (data.taxId !== undefined) dbRecord.Tax_ID__c = data.taxId;
-    if (data.billingContact !== undefined) dbRecord.Billing_Contact__c = data.billingContact;
-    if (data.creditLimit !== undefined) dbRecord.Credit_Limit__c = data.creditLimit;
-    if (data.paymentTerms !== undefined) dbRecord.Payment_Terms__c = data.paymentTerms;
-    if (data.corporateDiscount !== undefined) dbRecord.Corporate_Discount__c = data.corporateDiscount;
+    // Helper function to check if value is meaningful (not undefined, null, or empty string)
+    const hasValue = (value) => value !== undefined && value !== null && value !== '' && String(value).trim() !== '';
+    
+    if (hasValue(data.firstName)) dbRecord.First_Name__c = data.firstName;
+    if (hasValue(data.lastName)) dbRecord.Last_Name__c = data.lastName;
+    if (hasValue(data.email)) dbRecord.Email__c = data.email;
+    if (hasValue(data.phone)) dbRecord.Phone__c = data.phone;
+    if (hasValue(data.idType)) dbRecord.ID_Type__c = data.idType;
+    if (hasValue(data.idNumber)) dbRecord.ID_Number__c = data.idNumber;
+    if (hasValue(data.address?.street)) dbRecord.Address_Street__c = data.address.street;
+    if (hasValue(data.address?.city)) dbRecord.Address_City__c = data.address.city;
+    if (hasValue(data.address?.state)) dbRecord.Address_State__c = data.address.state;
+    if (hasValue(data.address?.zipCode)) dbRecord.Address_ZIP_Code__c = data.address.zipCode;
+    if (hasValue(data.vipStatus)) dbRecord.VIP_Status__c = data.vipStatus;
+    if (hasValue(data.loyaltyProgram?.tier)) dbRecord.Loyalty_Tier__c = data.loyaltyProgram.tier;
+    if (hasValue(data.loyaltyProgram?.points)) dbRecord.Loyalty_Points__c = data.loyaltyProgram.points;
+    if (hasValue(data.accountType)) dbRecord.Account_Type__c = data.accountType === 'corporate' ? 'Corporate' : 'Individual';
+    if (hasValue(data.companyName)) dbRecord.Company_Name__c = data.companyName;
+    if (hasValue(data.companyRegistration)) dbRecord.Company_Registration__c = data.companyRegistration;
+    if (hasValue(data.taxId)) dbRecord.Tax_ID__c = data.taxId;
+    if (hasValue(data.billingContact)) dbRecord.Billing_Contact__c = data.billingContact;
+    if (hasValue(data.creditLimit)) dbRecord.Credit_Limit__c = data.creditLimit;
+    if (hasValue(data.paymentTerms)) dbRecord.Payment_Terms__c = data.paymentTerms;
+    if (hasValue(data.corporateDiscount)) dbRecord.Corporate_Discount__c = data.corporateDiscount;
+    
+    // Ensure at least one field is present to avoid "Each record must contain at least one field" error
+    if (Object.keys(dbRecord).length === 0) {
+      // Include firstName even if empty to satisfy API requirement
+      dbRecord.First_Name__c = data.firstName || '';
+    }
     
     return dbRecord;
-}
+  }
 }
 
 export default new GuestService();

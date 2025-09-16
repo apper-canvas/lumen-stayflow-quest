@@ -673,7 +673,7 @@ const unpaidReservations = reservations.filter(reservation =>
 <div>
                       <p className="font-medium text-gray-900">${(bill.total_amount_c || 0).toFixed(2)}</p>
                       <p className="text-sm text-gray-600">
-                        Room: ${bill.room_charges_c.toFixed(2)}
+                        Room: ${(bill.room_charges_c || 0).toFixed(2)}
                         {(() => {
                           try {
                             const additionalCharges = typeof bill.additional_charges_c === 'string' 

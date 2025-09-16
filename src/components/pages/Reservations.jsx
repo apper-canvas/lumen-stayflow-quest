@@ -374,24 +374,43 @@ const result = window.confirm(
                       <p className="text-sm text-gray-600">{reservation.roomType}</p>
                     </div>
                     
-                    <div>
+<div>
                       <p className="font-medium text-gray-900">
-                        {format(new Date(reservation.checkIn), "MMM d, yyyy")}
+                        {(() => {
+                          const checkInDate = new Date(reservation.checkIn);
+                          return !isNaN(checkInDate.getTime()) 
+                            ? format(checkInDate, "MMM d, yyyy")
+                            : "Invalid date";
+                        })()}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {format(new Date(reservation.checkIn), "h:mm a")}
+                        {(() => {
+                          const checkInDate = new Date(reservation.checkIn);
+                          return !isNaN(checkInDate.getTime()) 
+                            ? format(checkInDate, "h:mm a")
+                            : "Invalid time";
+                        })()}
                       </p>
                     </div>
                     
                     <div>
-                      <p className="font-medium text-gray-900">
-                        {format(new Date(reservation.checkOut), "MMM d, yyyy")}
+<p className="font-medium text-gray-900">
+                        {(() => {
+                          const checkOutDate = new Date(reservation.checkOut);
+                          return !isNaN(checkOutDate.getTime()) 
+                            ? format(checkOutDate, "MMM d, yyyy")
+                            : "Invalid date";
+                        })()}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {format(new Date(reservation.checkOut), "h:mm a")}
+                        {(() => {
+                          const checkOutDate = new Date(reservation.checkOut);
+                          return !isNaN(checkOutDate.getTime()) 
+                            ? format(checkOutDate, "h:mm a")
+                            : "Invalid time";
+                        })()}
                       </p>
                     </div>
-                    
                     <div>
                       <Badge 
                         variant={

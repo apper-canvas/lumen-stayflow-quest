@@ -1,94 +1,263 @@
-import taskData from '@/services/mockData/tasks.json';
-
 class TaskService {
-constructor() {
-    this.data = [...taskData];
-    this.nextId = Math.max(...this.data.map(item => item.Id || 0)) + 1;
+  constructor() {
+    const { ApperClient } = window.ApperSDK;
+    this.apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    this.tableName = 'task_c';
   }
 
-delay = (ms = 300) => new Promise(resolve => setTimeout(resolve, ms));
+  async getAll() {
+    try {
+      const params = {
+        fields: [
+          {"field": {"Name": "Title__c"}},
+          {"field": {"Name": "Description__c"}},
+          {"field": {"Name": "Room__c"}},
+          {"field": {"Name": "Assigned_To__c"}},
+          {"field": {"Name": "Priority__c"}},
+          {"field": {"Name": "Status__c"}},
+          {"field": {"Name": "Estimated_Duration__c"}},
+          {"field": {"Name": "Scheduled_Date__c"}}
+        ],
+        orderBy: [{"fieldName": "Created_Date__c", "sorttype": "DESC"}]
+      };
+      
+      const response = await this.apperClient.fetchRecords(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
 
-async getAll() {
-    await this.delay();
-    return [...this.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
-async getById(id) {
-    await this.delay();
-    const task = this.data.find(task => task.Id === parseInt(id));
-    if (!task) {
-      throw new Error('Task not found');
+      return (response.data || []).map(this.transformFromDB);
+    } catch (error) {
+      console.error("Error fetching tasks:", error?.response?.data?.message || error);
+      return [];
     }
-    return { ...task };
-  }
-async create(taskData) {
-    await this.delay();
-    const newTask = {
-      ...taskData,
-      Id: this.nextId++,
-      roomId: taskData.roomId ? parseInt(taskData.roomId) : null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    this.data.push(newTask);
-    return { ...newTask };
   }
 
-async update(id, updateData) {
-    await this.delay();
-    const index = this.data.findIndex(task => task.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error('Task not found');
+  async getById(id) {
+    try {
+      const params = {
+        fields: [
+          {"field": {"Name": "Title__c"}},
+          {"field": {"Name": "Description__c"}},
+          {"field": {"Name": "Room__c"}},
+          {"field": {"Name": "Assigned_To__c"}},
+          {"field": {"Name": "Priority__c"}},
+          {"field": {"Name": "Status__c"}},
+          {"field": {"Name": "Estimated_Duration__c"}},
+          {"field": {"Name": "Scheduled_Date__c"}}
+        ]
+      };
+      
+      const response = await this.apperClient.getRecordById(this.tableName, id, params);
+      
+      if (!response?.data) {
+        throw new Error("Task not found");
+      }
+      
+      return this.transformFromDB(response.data);
+    } catch (error) {
+      console.error(`Error fetching task ${id}:`, error?.response?.data?.message || error);
+      throw new Error("Task not found");
     }
+  }
+
+  async create(taskData) {
+    try {
+      const params = {
+        records: [this.transformToDB(taskData)]
+      };
+      
+      const response = await this.apperClient.createRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} records:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+        
+        return successful.length > 0 ? this.transformFromDB(successful[0].data) : null;
+      }
+    } catch (error) {
+      console.error("Error creating task:", error?.response?.data?.message || error);
+      throw error;
+    }
+  }
+
+  async update(id, updateData) {
+    try {
+      const params = {
+        records: [{
+          Id: id,
+          ...this.transformToDB(updateData)
+        }]
+      };
+      
+      const response = await this.apperClient.updateRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to update ${failed.length} records:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+        
+        return successful.length > 0 ? this.transformFromDB(successful[0].data) : null;
+      }
+    } catch (error) {
+      console.error("Error updating task:", error?.response?.data?.message || error);
+      throw error;
+    }
+  }
+
+  async delete(id) {
+    try {
+      const params = { 
+        RecordIds: [id]
+      };
+      
+      const response = await this.apperClient.deleteRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to delete ${failed.length} records:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting task:", error?.response?.data?.message || error);
+      throw error;
+    }
+  }
+
+  async getByRoom(roomId) {
+    try {
+      const params = {
+        fields: [
+          {"field": {"Name": "Title__c"}},
+          {"field": {"Name": "Description__c"}},
+          {"field": {"Name": "Room__c"}},
+          {"field": {"Name": "Assigned_To__c"}},
+          {"field": {"Name": "Priority__c"}},
+          {"field": {"Name": "Status__c"}},
+          {"field": {"Name": "Estimated_Duration__c"}},
+          {"field": {"Name": "Scheduled_Date__c"}}
+        ],
+        where: [{"FieldName": "Room__c", "Operator": "EqualTo", "Values": [parseInt(roomId)]}]
+      };
+      
+      const response = await this.apperClient.fetchRecords(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
+
+      return (response.data || []).map(this.transformFromDB);
+    } catch (error) {
+      console.error("Error fetching tasks by room:", error?.response?.data?.message || error);
+      return [];
+    }
+  }
+
+  async getByStatus(status) {
+    try {
+      const params = {
+        fields: [
+          {"field": {"Name": "Title__c"}},
+          {"field": {"Name": "Description__c"}},
+          {"field": {"Name": "Room__c"}},
+          {"field": {"Name": "Assigned_To__c"}},
+          {"field": {"Name": "Priority__c"}},
+          {"field": {"Name": "Status__c"}},
+          {"field": {"Name": "Estimated_Duration__c"}},
+          {"field": {"Name": "Scheduled_Date__c"}}
+        ],
+        where: [{"FieldName": "Status__c", "Operator": "EqualTo", "Values": [status]}]
+      };
+      
+      const response = await this.apperClient.fetchRecords(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
+
+      return (response.data || []).map(this.transformFromDB);
+    } catch (error) {
+      console.error("Error fetching tasks by status:", error?.response?.data?.message || error);
+      return [];
+    }
+  }
+
+  transformFromDB(record) {
+    if (!record) return null;
     
-    this.data[index] = { 
-      ...this.data[index], 
-      ...updateData,
-      roomId: updateData.roomId ? parseInt(updateData.roomId) : this.data[index].roomId,
-      updatedAt: new Date().toISOString()
+    return {
+      Id: record.Id,
+      title: record.Title__c || '',
+      description: record.Description__c || '',
+      roomId: record.Room__c?.Id || record.Room__c || null,
+      assignedTo: record.Assigned_To__c || '',
+      priority: record.Priority__c || 'Medium',
+      status: record.Status__c || 'Pending',
+      estimatedDuration: record.Estimated_Duration__c || '',
+      scheduledDate: record.Scheduled_Date__c || '',
+      createdAt: record.Created_Date__c,
+      updatedAt: record.Last_Modified_Date__c
     };
-    return { ...this.data[index] };
   }
 
-async delete(id) {
-    await this.delay();
-    const index = this.data.findIndex(task => task.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error('Task not found');
-    }
-    this.data.splice(index, 1);
-    return true;
-  }
-
-async getByRoom(roomId) {
-    await this.delay();
-    return this.data.filter(task => task.roomId === parseInt(roomId));
-  }
-
-async getByStatus(status) {
-    await this.delay();
-    return this.data.filter(task => task.status.toLowerCase() === status.toLowerCase());
-  }
-
-async getByAssignee(assignedTo) {
-    await this.delay();
-    return this.data.filter(task => 
-      task.assignedTo.toLowerCase().includes(assignedTo.toLowerCase())
-    );
-  }
-
-  async getByPriority(priority) {
-    await this.delay();
-    return this.data.filter(task => task.priority.toLowerCase() === priority.toLowerCase());
-  }
-
-  async getHousekeepingTasks() {
-    await this.delay();
-    return this.data.filter(task => 
-      task.title.toLowerCase().includes('clean') || 
-      task.title.toLowerCase().includes('housekeeping') ||
-      task.description.toLowerCase().includes('clean')
-    );
+  transformToDB(data) {
+    const dbRecord = {};
+    
+    if (data.title !== undefined) dbRecord.Title__c = data.title;
+    if (data.description !== undefined) dbRecord.Description__c = data.description;
+    if (data.roomId !== undefined) dbRecord.Room__c = data.roomId ? parseInt(data.roomId) : null;
+    if (data.assignedTo !== undefined) dbRecord.Assigned_To__c = data.assignedTo;
+    if (data.priority !== undefined) dbRecord.Priority__c = data.priority;
+    if (data.status !== undefined) dbRecord.Status__c = data.status;
+    if (data.estimatedDuration !== undefined) dbRecord.Estimated_Duration__c = data.estimatedDuration;
+    if (data.scheduledDate !== undefined) dbRecord.Scheduled_Date__c = data.scheduledDate;
+    
+    return dbRecord;
   }
 }
+
+export default new TaskService();
 
 export default new TaskService();

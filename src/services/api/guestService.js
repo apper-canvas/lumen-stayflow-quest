@@ -1,106 +1,287 @@
-import guestData from "@/services/mockData/guests.json";
-
+class GuestService {
 class GuestService {
   constructor() {
-this.data = [...guestData];
-    this.nextId = Math.max(...this.data.map(item => item.Id)) + 1;
+    const { ApperClient } = window.ApperSDK;
+    this.apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    this.tableName = 'guest_c';
   }
 
   async getAll() {
-    await this.delay();
-    return [...this.data];
+    try {
+      const params = {
+        fields: [
+          {"field": {"Name": "First_Name__c"}},
+          {"field": {"Name": "Last_Name__c"}},
+          {"field": {"Name": "Email__c"}},
+          {"field": {"Name": "Phone__c"}},
+          {"field": {"Name": "ID_Type__c"}},
+          {"field": {"Name": "ID_Number__c"}},
+          {"field": {"Name": "Address_Street__c"}},
+          {"field": {"Name": "Address_City__c"}},
+          {"field": {"Name": "Address_State__c"}},
+          {"field": {"Name": "Address_ZIP_Code__c"}},
+          {"field": {"Name": "VIP_Status__c"}},
+          {"field": {"Name": "Loyalty_Tier__c"}},
+          {"field": {"Name": "Loyalty_Points__c"}},
+          {"field": {"Name": "Account_Type__c"}},
+          {"field": {"Name": "Company_Name__c"}},
+          {"field": {"Name": "Company_Registration__c"}},
+          {"field": {"Name": "Tax_ID__c"}},
+          {"field": {"Name": "Billing_Contact__c"}},
+          {"field": {"Name": "Credit_Limit__c"}},
+          {"field": {"Name": "Payment_Terms__c"}},
+          {"field": {"Name": "Corporate_Discount__c"}}
+        ],
+        orderBy: [{"fieldName": "Last_Name__c", "sorttype": "ASC"}]
+      };
+      
+      const response = await this.apperClient.fetchRecords(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
+
+      return (response.data || []).map(this.transformFromDB);
+    } catch (error) {
+      console.error("Error fetching guests:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async getById(id) {
-    await this.delay();
-    const guest = this.data.find(item => item.Id === id);
-    if (!guest) throw new Error("Guest not found");
-    return { ...guest };
+    try {
+      const params = {
+        fields: [
+          {"field": {"Name": "First_Name__c"}},
+          {"field": {"Name": "Last_Name__c"}},
+          {"field": {"Name": "Email__c"}},
+          {"field": {"Name": "Phone__c"}},
+          {"field": {"Name": "ID_Type__c"}},
+          {"field": {"Name": "ID_Number__c"}},
+          {"field": {"Name": "Address_Street__c"}},
+          {"field": {"Name": "Address_City__c"}},
+          {"field": {"Name": "Address_State__c"}},
+          {"field": {"Name": "Address_ZIP_Code__c"}},
+          {"field": {"Name": "VIP_Status__c"}},
+          {"field": {"Name": "Loyalty_Tier__c"}},
+          {"field": {"Name": "Loyalty_Points__c"}},
+          {"field": {"Name": "Account_Type__c"}},
+          {"field": {"Name": "Company_Name__c"}},
+          {"field": {"Name": "Company_Registration__c"}},
+          {"field": {"Name": "Tax_ID__c"}},
+          {"field": {"Name": "Billing_Contact__c"}},
+          {"field": {"Name": "Credit_Limit__c"}},
+          {"field": {"Name": "Payment_Terms__c"}},
+          {"field": {"Name": "Corporate_Discount__c"}}
+        ]
+      };
+      
+      const response = await this.apperClient.getRecordById(this.tableName, id, params);
+      
+      if (!response?.data) {
+        throw new Error("Guest not found");
+      }
+      
+      return this.transformFromDB(response.data);
+    } catch (error) {
+      console.error(`Error fetching guest ${id}:`, error?.response?.data?.message || error);
+      throw new Error("Guest not found");
+    }
   }
 
-async create(guestData) {
-    await this.delay();
-    const newGuest = {
-      Id: this.nextId++,
-      ...guestData,
-      idType: guestData.idType || "",
-      idNumber: guestData.idNumber || "",
-      createdAt: new Date().toISOString(),
-      stayHistory: [],
-      vipStatus: guestData.vipStatus || false,
-      loyaltyProgram: guestData.loyaltyProgram || {
-        tier: "",
-        points: 0,
-        joinDate: ""
-      },
-      // Corporate account fields
-      accountType: guestData.accountType || 'individual',
-      companyName: guestData.companyName || "",
-      companyRegistration: guestData.companyRegistration || "",
-      taxId: guestData.taxId || "",
-      billingContact: guestData.billingContact || "",
-      creditLimit: guestData.creditLimit || 0,
-      paymentTerms: guestData.paymentTerms || "net30",
-      corporateDiscount: guestData.corporateDiscount || 0
-    };
-    this.data.push(newGuest);
-    return { ...newGuest };
+  async create(guestData) {
+    try {
+      const params = {
+        records: [this.transformToDB(guestData)]
+      };
+      
+      const response = await this.apperClient.createRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} records:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+        
+        return successful.length > 0 ? this.transformFromDB(successful[0].data) : null;
+      }
+    } catch (error) {
+      console.error("Error creating guest:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
-async update(id, updateData) {
-    await this.delay();
-    const index = this.data.findIndex(item => item.Id === id);
-    if (index === -1) throw new Error("Guest not found");
-    
-    // Ensure all fields including ID fields and corporate fields are properly handled
-    const updatedGuest = {
-      ...this.data[index],
-      ...updateData,
-      idType: updateData.idType !== undefined ? updateData.idType : this.data[index].idType,
-      idNumber: updateData.idNumber !== undefined ? updateData.idNumber : this.data[index].idNumber,
-      vipStatus: updateData.vipStatus !== undefined ? updateData.vipStatus : this.data[index].vipStatus,
-      loyaltyProgram: updateData.loyaltyProgram 
-        ? { ...this.data[index].loyaltyProgram, ...updateData.loyaltyProgram }
-        : this.data[index].loyaltyProgram,
-      // Handle corporate account fields
-      accountType: updateData.accountType !== undefined ? updateData.accountType : this.data[index].accountType,
-      companyName: updateData.companyName !== undefined ? updateData.companyName : this.data[index].companyName,
-      companyRegistration: updateData.companyRegistration !== undefined ? updateData.companyRegistration : this.data[index].companyRegistration,
-      taxId: updateData.taxId !== undefined ? updateData.taxId : this.data[index].taxId,
-      billingContact: updateData.billingContact !== undefined ? updateData.billingContact : this.data[index].billingContact,
-      creditLimit: updateData.creditLimit !== undefined ? updateData.creditLimit : this.data[index].creditLimit,
-      paymentTerms: updateData.paymentTerms !== undefined ? updateData.paymentTerms : this.data[index].paymentTerms,
-      corporateDiscount: updateData.corporateDiscount !== undefined ? updateData.corporateDiscount : this.data[index].corporateDiscount
-    };
-    
-    this.data[index] = updatedGuest;
-    return { ...this.data[index] };
-  }
-
-  async getCorporateAccounts() {
-    await this.delay();
-    return this.data.filter(guest => guest.accountType === 'corporate');
-  }
-
-  async getCorporateAccountById(id) {
-    await this.delay();
-    const account = this.data.find(guest => guest.Id === id && guest.accountType === 'corporate');
-    if (!account) throw new Error("Corporate account not found");
-    return { ...account };
+  async update(id, updateData) {
+    try {
+      const params = {
+        records: [{
+          Id: id,
+          ...this.transformToDB(updateData)
+        }]
+      };
+      
+      const response = await this.apperClient.updateRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to update ${failed.length} records:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+        
+        return successful.length > 0 ? this.transformFromDB(successful[0].data) : null;
+      }
+    } catch (error) {
+      console.error("Error updating guest:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async delete(id) {
-    await this.delay();
-    const index = this.data.findIndex(item => item.Id === id);
-    if (index === -1) throw new Error("Guest not found");
-    
-    const deleted = this.data.splice(index, 1)[0];
-    return { ...deleted };
+    try {
+      const params = { 
+        RecordIds: [id]
+      };
+      
+      const response = await this.apperClient.deleteRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to delete ${failed.length} records:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting guest:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
-  delay() {
-    return new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 200));
+  async getCorporateAccounts() {
+    try {
+      const params = {
+        fields: [
+          {"field": {"Name": "First_Name__c"}},
+          {"field": {"Name": "Last_Name__c"}},
+          {"field": {"Name": "Email__c"}},
+          {"field": {"Name": "Phone__c"}},
+          {"field": {"Name": "Company_Name__c"}},
+          {"field": {"Name": "Account_Type__c"}}
+        ],
+        where: [{"FieldName": "Account_Type__c", "Operator": "EqualTo", "Values": ["Corporate"]}]
+      };
+      
+      const response = await this.apperClient.fetchRecords(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
+
+      return (response.data || []).map(this.transformFromDB);
+    } catch (error) {
+      console.error("Error fetching corporate accounts:", error?.response?.data?.message || error);
+      return [];
+    }
   }
+
+  transformFromDB(record) {
+    if (!record) return null;
+    
+    return {
+      Id: record.Id,
+      firstName: record.First_Name__c || '',
+      lastName: record.Last_Name__c || '',
+      email: record.Email__c || '',
+      phone: record.Phone__c || '',
+      idType: record.ID_Type__c || '',
+      idNumber: record.ID_Number__c || '',
+      address: {
+        street: record.Address_Street__c || '',
+        city: record.Address_City__c || '',
+        state: record.Address_State__c || '',
+        zipCode: record.Address_ZIP_Code__c || ''
+      },
+      vipStatus: record.VIP_Status__c || false,
+      loyaltyProgram: {
+        tier: record.Loyalty_Tier__c || '',
+        points: record.Loyalty_Points__c || 0,
+        joinDate: record.Created_Date__c || ''
+      },
+      accountType: record.Account_Type__c === 'Corporate' ? 'corporate' : 'individual',
+      companyName: record.Company_Name__c || '',
+      companyRegistration: record.Company_Registration__c || '',
+      taxId: record.Tax_ID__c || '',
+      billingContact: record.Billing_Contact__c || '',
+      creditLimit: record.Credit_Limit__c || 0,
+      paymentTerms: record.Payment_Terms__c || 'net30',
+      corporateDiscount: record.Corporate_Discount__c || 0,
+      createdAt: record.Created_Date__c,
+      stayHistory: []
+    };
+  }
+
+  transformToDB(data) {
+    const dbRecord = {};
+    
+    if (data.firstName !== undefined) dbRecord.First_Name__c = data.firstName;
+    if (data.lastName !== undefined) dbRecord.Last_Name__c = data.lastName;
+    if (data.email !== undefined) dbRecord.Email__c = data.email;
+    if (data.phone !== undefined) dbRecord.Phone__c = data.phone;
+    if (data.idType !== undefined) dbRecord.ID_Type__c = data.idType;
+    if (data.idNumber !== undefined) dbRecord.ID_Number__c = data.idNumber;
+    if (data.address?.street !== undefined) dbRecord.Address_Street__c = data.address.street;
+    if (data.address?.city !== undefined) dbRecord.Address_City__c = data.address.city;
+    if (data.address?.state !== undefined) dbRecord.Address_State__c = data.address.state;
+    if (data.address?.zipCode !== undefined) dbRecord.Address_ZIP_Code__c = data.address.zipCode;
+    if (data.vipStatus !== undefined) dbRecord.VIP_Status__c = data.vipStatus;
+    if (data.loyaltyProgram?.tier !== undefined) dbRecord.Loyalty_Tier__c = data.loyaltyProgram.tier;
+    if (data.loyaltyProgram?.points !== undefined) dbRecord.Loyalty_Points__c = data.loyaltyProgram.points;
+    if (data.accountType !== undefined) dbRecord.Account_Type__c = data.accountType === 'corporate' ? 'Corporate' : 'Individual';
+    if (data.companyName !== undefined) dbRecord.Company_Name__c = data.companyName;
+    if (data.companyRegistration !== undefined) dbRecord.Company_Registration__c = data.companyRegistration;
+    if (data.taxId !== undefined) dbRecord.Tax_ID__c = data.taxId;
+    if (data.billingContact !== undefined) dbRecord.Billing_Contact__c = data.billingContact;
+    if (data.creditLimit !== undefined) dbRecord.Credit_Limit__c = data.creditLimit;
+    if (data.paymentTerms !== undefined) dbRecord.Payment_Terms__c = data.paymentTerms;
+    if (data.corporateDiscount !== undefined) dbRecord.Corporate_Discount__c = data.corporateDiscount;
+    
+    return dbRecord;
+}
 }
 
 export default new GuestService();

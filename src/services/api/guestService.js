@@ -1,5 +1,4 @@
 class GuestService {
-class GuestService {
   constructor() {
     const { ApperClient } = window.ApperSDK;
     this.apperClient = new ApperClient({

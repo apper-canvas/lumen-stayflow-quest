@@ -74,30 +74,30 @@ const [accountTypeFilter, setAccountTypeFilter] = useState("all");
     }
   };
 
-  const filterGuests = () => {
+const filterGuests = () => {
 let filtered = [...guests];
 
     // Filter by account type
     if (accountTypeFilter !== "all") {
       filtered = filtered.filter(guest => 
-        guest.accountType === accountTypeFilter
+        guest.account_type_c === accountTypeFilter
       );
     }
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(guest =>
-        `${guest.firstName} ${guest.lastName}`.toLowerCase().includes(query) ||
-        guest.email.toLowerCase().includes(query) ||
-        guest.phone.includes(query) ||
-        (guest.companyName && guest.companyName.toLowerCase().includes(query))
+        `${guest.first_name_c} ${guest.last_name_c}`.toLowerCase().includes(query) ||
+        guest.email_c.toLowerCase().includes(query) ||
+        guest.phone_c.includes(query) ||
+        (guest.company_name_c && guest.company_name_c.toLowerCase().includes(query))
       );
     }
 
     // Sort by last name, then first name
     filtered.sort((a, b) => {
-      const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
-      const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
+      const nameA = `${a.last_name_c} ${a.first_name_c}`.toLowerCase();
+      const nameB = `${b.last_name_c} ${b.first_name_c}`.toLowerCase();
       return nameA.localeCompare(nameB);
     });
 
@@ -143,43 +143,59 @@ setFormData({
     setShowForm(true);
   };
 
-  const handleEditGuest = (guest) => {
+const handleEditGuest = (guest) => {
+    // Parse JSON fields safely
+    let addressData = {};
+    let loyaltyData = {};
+    
+    try {
+      addressData = typeof guest.address_c === 'string' ? JSON.parse(guest.address_c) : (guest.address_c || {});
+    } catch {
+      addressData = {};
+    }
+    
+    try {
+      loyaltyData = typeof guest.loyalty_program_c === 'string' ? JSON.parse(guest.loyalty_program_c) : (guest.loyalty_program_c || {});
+    } catch {
+      loyaltyData = {};
+    }
+
 setFormData({
-      firstName: guest.firstName || "",
-      lastName: guest.lastName || "",
-      email: guest.email || "",
-      phone: guest.phone || "",
-      idType: guest.idType || "",
-      idNumber: guest.idNumber || "",
+      firstName: guest.first_name_c || "",
+      lastName: guest.last_name_c || "",
+      email: guest.email_c || "",
+      phone: guest.phone_c || "",
+      idType: guest.id_type_c || "",
+      idNumber: guest.id_number_c || "",
       address: {
-        street: guest.address?.street || "",
-        city: guest.address?.city || "",
-        state: guest.address?.state || "",
-        zipCode: guest.address?.zipCode || ""
+        street: addressData.street || "",
+        city: addressData.city || "",
+        state: addressData.state || "",
+        zipCode: addressData.zipCode || ""
       },
-      preferences: guest.preferences || [],
-      vipStatus: guest.vipStatus || false,
+      preferences: guest.preferences_c || [],
+      vipStatus: guest.vip_status_c || false,
       loyaltyProgram: {
-        tier: guest.loyaltyProgram?.tier || "",
-        points: guest.loyaltyProgram?.points || 0,
-        joinDate: guest.loyaltyProgram?.joinDate || ""
+        tier: loyaltyData.tier || "",
+        points: loyaltyData.points || 0,
+        joinDate: loyaltyData.joinDate || ""
       },
-      accountType: guest.accountType || "individual",
-      companyName: guest.companyName || "",
-      companyRegistration: guest.companyRegistration || "",
-      taxId: guest.taxId || "",
-      billingContact: guest.billingContact || "",
-      creditLimit: guest.creditLimit || 0,
-      paymentTerms: guest.paymentTerms || "net30",
-      corporateDiscount: guest.corporateDiscount || 0
+      accountType: guest.account_type_c || "individual",
+      companyName: guest.company_name_c || "",
+      companyRegistration: guest.company_registration_c || "",
+      taxId: guest.tax_id_c || "",
+      billingContact: guest.billing_contact_c || "",
+      creditLimit: guest.credit_limit_c || 0,
+      paymentTerms: guest.payment_terms_c || "net30",
+      corporateDiscount: guest.corporate_discount_c || 0
     });
     setSelectedGuest(guest);
     setFormErrors({});
     setShowForm(true);
   };
 
-  const handleDeleteGuest = async (guest) => {
-    if (window.confirm(`Are you sure you want to delete ${guest.firstName} ${guest.lastName}?`)) {
+const handleDeleteGuest = async (guest) => {
+    if (window.confirm(`Are you sure you want to delete ${guest.first_name_c} ${guest.last_name_c}?`)) {
       try {
         await guestService.delete(guest.Id);
         toast.success("Guest deleted successfully!");
@@ -238,23 +254,37 @@ const errors = {};
     return Object.keys(errors).length === 0;
   };
 
-  const handleFormSubmit = async (e) => {
+const handleFormSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     try {
+      // Map form data (camelCase) to database field names (_c suffix)
 const guestData = {
-        ...formData,
-        stayHistory: selectedGuest?.stayHistory || [],
-        createdAt: selectedGuest?.createdAt || new Date().toISOString(),
-        loyaltyProgram: {
+        first_name_c: formData.firstName,
+        last_name_c: formData.lastName,
+        email_c: formData.email,
+        phone_c: formData.phone,
+        id_type_c: formData.idType,
+        id_number_c: formData.idNumber,
+        address_c: JSON.stringify(formData.address),
+        preferences_c: formData.preferences,
+        vip_status_c: formData.vipStatus,
+        loyalty_program_c: JSON.stringify({
           ...formData.loyaltyProgram,
           joinDate: formData.loyaltyProgram.joinDate || new Date().toISOString().split('T')[0]
-        },
-        // Ensure corporate fields are properly handled
-        creditLimit: formData.accountType === "corporate" ? formData.creditLimit : 0,
-        corporateDiscount: formData.accountType === "corporate" ? formData.corporateDiscount : 0
+        }),
+        account_type_c: formData.accountType,
+        company_name_c: formData.accountType === "corporate" ? formData.companyName : "",
+        company_registration_c: formData.accountType === "corporate" ? formData.companyRegistration : "",
+        tax_id_c: formData.accountType === "corporate" ? formData.taxId : "",
+        billing_contact_c: formData.accountType === "corporate" ? formData.billingContact : "",
+        credit_limit_c: formData.accountType === "corporate" ? formData.creditLimit : 0,
+        payment_terms_c: formData.accountType === "corporate" ? formData.paymentTerms : "net30",
+        corporate_discount_c: formData.accountType === "corporate" ? formData.corporateDiscount : 0,
+        stay_history_c: selectedGuest?.stay_history_c || [],
+        created_at_c: selectedGuest?.created_at_c || new Date().toISOString()
       };
 
       if (selectedGuest) {

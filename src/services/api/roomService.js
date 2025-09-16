@@ -193,5 +193,3 @@ class RoomService {
 }
 
 export default new RoomService();
-
-export default new RoomService();

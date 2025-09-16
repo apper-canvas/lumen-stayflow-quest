@@ -28,7 +28,6 @@ function Tasks() {
 roomId: '',
     assignedTo: '',
     priority: 'Medium',
-    estimatedDuration: '',
 estimatedDuration: '',
     scheduledDate: '',
     status: 'Pending'

@@ -372,5 +372,3 @@ class BillingService {
 }
 
 export default new BillingService();
-
-export default new BillingService();

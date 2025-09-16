@@ -314,5 +314,3 @@ class ReservationService {
 }
 
 export default new ReservationService();
-export default new ReservationService();
-export default new ReservationService();

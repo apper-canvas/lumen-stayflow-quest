@@ -654,7 +654,7 @@ error={formErrors.phone}
                 <div key={guest.Id} className="px-6 py-4 hover:bg-gray-50">
                   <div className="grid grid-cols-1 md:grid-cols-8 gap-4 items-center">
 <div>
-                      <div className="flex items-center gap-2">
+<div className="flex items-center gap-2">
                         <p className="font-medium text-gray-900">
                           {guest.first_name_c} {guest.last_name_c}
                           {guest.vip_status_c && (
@@ -675,15 +675,15 @@ error={formErrors.phone}
                       )}
                     </div>
                     
-                    <div>
+<div>
                       <p className="text-gray-900">{guest.email_c}</p>
                     </div>
                     
-                    <div>
+<div>
                       <p className="text-gray-900">{guest.phone_c}</p>
                     </div>
                     
-                    <div>
+<div>
                       <Badge 
                         variant={guest.account_type_c === "corporate" ? "info" : "default"} 
                         size="sm"
@@ -697,12 +697,12 @@ error={formErrors.phone}
                       )}
                     </div>
 
-                    <div>
+<div>
                       <p className="font-medium text-gray-900">{guest.id_type_c || "N/A"}</p>
                       <p className="text-sm text-gray-600">{guest.id_number_c || "Not provided"}</p>
                     </div>
 
-                    <div>
+<div>
                       <p className="font-medium text-gray-900">
                         {(() => {
                           try {
@@ -728,7 +728,7 @@ error={formErrors.phone}
                     </div>
 
                     <div className="flex flex-col space-y-1">
-                      {guest.vip_status_c && (
+{guest.vip_status_c && (
                         <Badge variant="warning" size="sm">
                           VIP Guest
                         </Badge>
